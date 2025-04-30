@@ -2,6 +2,7 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const dgram = require('dgram');
 const os = require('os');
+const express = require('express');
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -49,8 +50,9 @@ function startUDPListener(window) {
       sendToFrontend(window, role, hostIP);
       clearInterval(interval);
       udpClient.close();
+      startRestAPI(hostIP);
     }
-  }, 1000); // Try every 1s
+  }, 1000);
 
   udpClient.on('message', (msg) => {
     const message = msg.toString();
@@ -76,11 +78,28 @@ function startUDPBroadcast() {
     const ip = getLocalIP();
     const message = Buffer.from(`I_AM_HOST:${ip}`);
     udpHost.send(message, 0, message.length, 4000, '255.255.255.255');
-  }, 1000); // Broadcast every 1s
+  }, 1000);
 
   udpHost.bind(() => {
     udpHost.setBroadcast(true);
     console.log('[UDP HOST] Broadcasting I_AM_HOST every 1s');
+  });
+}
+
+function startRestAPI(hostIP) {
+  const app = express();
+  const port = 3000;
+
+  app.get('/', (req, res) => {
+    res.send('Hello from the host API server!');
+  });
+
+  app.get('/login', (req, res) => {
+    res.json({"message":"Hello from local backend"});
+  });
+
+  app.listen(port, hostIP, () => {
+    console.log(`[REST API] Server started at http://${hostIP}:${port}`);
   });
 }
 
