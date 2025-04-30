@@ -5,11 +5,20 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "build": "electron-packager .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "file:"
+    "electron": "file:",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "asar": true,
+    "files": [
+      "preload.js",
+      "main.js"
+    ]
   }
 }

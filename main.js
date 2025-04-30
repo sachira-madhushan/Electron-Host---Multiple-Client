@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+// main.js
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const dgram = require('dgram');
 const os = require('os');
@@ -15,22 +16,31 @@ function getLocalIP() {
   return '0.0.0.0';
 }
 
-let role = null; // Will be 'host' or 'client'
+let role = null;
 let hostIP = null;
+
+function sendToFrontend(window, role, hostIP) {
+  const script = `
+    window.dispatchEvent(new CustomEvent('role', { detail: '${role}' }));
+    window.dispatchEvent(new CustomEvent('host-ip', { detail: '${hostIP}' }));
+  `;
+  window.webContents.executeJavaScript(script).catch((err) =>
+    console.error("Failed to inject script:", err)
+  );
+}
 
 function startUDPListener(window) {
   const udpClient = dgram.createSocket('udp4');
 
-  udpClient.on('message', (msg, rinfo) => {
+  udpClient.on('message', (msg) => {
     const message = msg.toString();
     if (message.startsWith('I_AM_HOST')) {
-      if (!role) { // Only set role if it is not already set
+      if (!role) {
         hostIP = message.split(':')[1];
         role = 'client';
         console.log(`[UDP CLIENT] Host detected at: ${hostIP}`);
-        window.webContents.send('role', role);
-        window.webContents.send('host-ip', hostIP);
-        udpClient.close(); // Stop listening once we know
+        sendToFrontend(window, role, hostIP);
+        udpClient.close();
       }
     }
   });
@@ -39,21 +49,19 @@ function startUDPListener(window) {
     console.log('[UDP CLIENT] Listening for Host on port 4000');
   });
 
-  // After 5 seconds, if no host detected, become Host
   setTimeout(() => {
     if (!role) {
       role = 'host';
       hostIP = getLocalIP();
       console.log('[UDP CLIENT] No host found, becoming Host');
-      startUDPBroadcast(window);
-      window.webContents.send('role', role);
-      window.webContents.send('host-ip', hostIP);
+      startUDPBroadcast();
+      sendToFrontend(window, role, hostIP);
       udpClient.close();
     }
   }, 5000);
 }
 
-function startUDPBroadcast(window) {
+function startUDPBroadcast() {
   const udpHost = dgram.createSocket('udp4');
 
   setInterval(() => {
@@ -73,11 +81,14 @@ app.whenReady().then(() => {
     width: 1000,
     height: 700,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false, // Important: Secure setup
+      contextIsolation: true, // Important: Secure setup
+      sandbox: false
     }
   });
 
-  win.loadURL('http://localhost:4173/');
+//   win.setMenu(null);
+  win.loadURL('https://pwa-crud-new-auth.netlify.app'); // Your React frontend
 
-  startUDPListener(win); // Start by listening
+  startUDPListener(win);
 });
