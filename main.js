@@ -5,6 +5,8 @@ const os = require('os');
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
+const cors=require('cors');
+const bodyParser = require('body-parser');
 
 function startReactServer() {
   const port = 3011;
@@ -157,14 +159,27 @@ function startUDPBroadcast() {
 function startRestAPI(hostIP) {
   const app = express();
   const port = 3000;
+  const userRoutes=require('./server/routes/userRoutes')
+
+  const corsOptions = {
+    allowedOrigins : [
+      'http://localhost:3011',
+    ],
+    allowedHeaders: ['*'],
+    credentials: true,
+  };
+  
+  app.use(cors(corsOptions));
+  app.options('/{*any}', cors(corsOptions));
+  
+  app.use(bodyParser.json({ limit: "50mb" }));
+  app.use(bodyParser.json());
 
   app.get('/', (req, res) => {
     res.send('Hello from the host API server!');
   });
 
-  app.get('/login', (req, res) => {
-    res.json({ "message": "Hello from local backend" });
-  });
+  app.use('/api/users',userRoutes);
 
   app.listen(port, hostIP, () => {
     console.log(`[REST API] Server started at http://${hostIP}:${port}`);
