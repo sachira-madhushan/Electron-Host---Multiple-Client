@@ -6,6 +6,15 @@ const express = require('express');
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
+  for (const [name, iface] of Object.entries(interfaces)) {
+    if (name.toLowerCase().includes("wi-fi")) {
+      for (const config of iface) {
+        if (config.family === 'IPv4' && !config.internal) {
+          return config.address;
+        }
+      }
+    }
+  }
   for (const iface of Object.values(interfaces)) {
     for (const config of iface) {
       if (config.family === 'IPv4' && !config.internal) {
@@ -13,6 +22,7 @@ function getLocalIP() {
       }
     }
   }
+
   return '0.0.0.0';
 }
 
@@ -47,6 +57,7 @@ function startUDPListener(window) {
       hostIP = getLocalIP();
       console.log('[UDP CLIENT] No host found after 5s, becoming Host');
       startUDPBroadcast();
+
       sendToFrontend(window, role, hostIP);
       clearInterval(interval);
       udpClient.close();
@@ -72,12 +83,21 @@ function startUDPListener(window) {
 }
 
 function startUDPBroadcast() {
+
   const udpHost = dgram.createSocket('udp4');
 
   setInterval(() => {
     const ip = getLocalIP();
     const message = Buffer.from(`I_AM_HOST:${ip}`);
-    udpHost.send(message, 0, message.length, 4000, '255.255.255.255');
+    const broadcastIP = ip.split('.').slice(0, 3).join('.') + '.255';
+    console.log(broadcastIP);
+
+    try {
+      udpHost.send(message, 0, message.length, 4000, broadcastIP);
+
+    } catch (err) {
+      console.error(err)
+    }
   }, 1000);
 
   udpHost.bind(() => {
@@ -95,7 +115,7 @@ function startRestAPI(hostIP) {
   });
 
   app.get('/login', (req, res) => {
-    res.json({"message":"Hello from local backend"});
+    res.json({ "message": "Hello from local backend" });
   });
 
   app.listen(port, hostIP, () => {
@@ -114,8 +134,7 @@ app.whenReady().then(() => {
     }
   });
 
-  // win.setMenu(null); // Optional: disable menu bar
-  win.loadURL('https://pwa-crud-new-auth.netlify.app'); // Replace with your frontend URL
+  win.loadURL('https://pwa-crud-new-auth.netlify.app');
 
   startUDPListener(win);
 });
