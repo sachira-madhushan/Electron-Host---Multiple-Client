@@ -3,6 +3,55 @@ const path = require('path');
 const dgram = require('dgram');
 const os = require('os');
 const express = require('express');
+const http = require('http');
+const fs = require('fs');
+
+function startReactServer() {
+  const port = 3011;
+  const buildPath = path.join(__dirname, 'dist');
+
+  const server = http.createServer((req, res) => {
+    let filePath = path.join(buildPath, req.url === '/' ? 'index.html' : req.url);
+
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('File not found');
+      } else {
+        const extname = path.extname(filePath);
+        let contentType = 'text/plain';
+        if (extname === '.js') contentType = 'application/javascript';
+        else if (extname === '.css') contentType = 'text/css';
+        else if (extname === '.png') contentType = 'image/png';
+        else if (extname === '.jpg') contentType = 'image/jpeg';
+        else if (extname === '.html') contentType = 'text/html';
+
+        res.writeHead(200, { 'Content-Type': contentType });
+        res.end(data);
+      }
+    });
+  });
+
+  
+  server.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+
+   
+    const win = new BrowserWindow({
+      width: 1000,
+      height: 700,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+      },
+    });
+
+    
+    win.loadURL(`http://localhost:${port}`);
+    startUDPListener(win);
+  });
+}
+
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -90,7 +139,6 @@ function startUDPBroadcast() {
     const ip = getLocalIP();
     const message = Buffer.from(`I_AM_HOST:${ip}`);
     const broadcastIP = ip.split('.').slice(0, 3).join('.') + '.255';
-    console.log(broadcastIP);
 
     try {
       udpHost.send(message, 0, message.length, 4000, broadcastIP);
@@ -124,17 +172,5 @@ function startRestAPI(hostIP) {
 }
 
 app.whenReady().then(() => {
-  const win = new BrowserWindow({
-    width: 1000,
-    height: 700,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      sandbox: false
-    }
-  });
-
-  win.loadURL('https://pwa-crud-new-auth.netlify.app');
-
-  startUDPListener(win);
+  startReactServer();
 });
