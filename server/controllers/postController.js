@@ -1,13 +1,15 @@
 const sqlite3 = require('sqlite3').verbose();
+const path=require('path')
 
-const db = new sqlite3.Database('./../db/localDB.db');
+const dbPath = path.join(__dirname, '../db/localDB.db');
+const db = new sqlite3.Database(dbPath);
 
 const getAllPosts = (req, res) => {
     db.all('SELECT * FROM posts', [], (err, rows) => {
         if (err) {
             return res.status(500).json({ error: err.message });
         }
-        res.json(rows);
+        res.json({posts:rows});
     });
 };
 
@@ -18,6 +20,7 @@ const createPost = (req, res) => {
     }
 
     const sync_status = 'pending';
+
     db.run(
         'INSERT INTO posts (title, body, sync_status) VALUES (?, ?, ?)',
         [title, body, sync_status],
@@ -25,7 +28,12 @@ const createPost = (req, res) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(201).json({ id: this.lastID, title, body, sync_status });
+            db.all('SELECT * FROM posts', [], (err, rows) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.json({posts:rows});
+            });
         }
     );
 };
@@ -66,7 +74,12 @@ const deletePost = (req, res) => {
             if (this.changes === 0) {
                 return res.status(404).json({ error: 'Post not found' });
             }
-            res.json({ message: 'Post marked as deleted' });
+            db.all('SELECT * FROM posts', [], (err, rows) => {
+                if (err) {
+                    return res.status(500).json({ error: err.message });
+                }
+                res.json({posts:rows});
+            });
         }
     );
 };
