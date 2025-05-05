@@ -36,4 +36,18 @@ function createUser(req, res) {
 
 }
 
-module.exports={createUser,getUsers};
+function loginLocalUsers(req, res) {
+    const { email, password } = req.body;
+
+    db.all("SELECT * FROM users WHERE email=? AND password=? LIMIT 1", [email, password], (err, rows) => {
+        if (err) {
+            res.status(500).send({ message: "Error while logging in" });
+        } else if (rows.length > 0) {
+            res.status(200).send({ message: "Login successful", user:{name:rows[0].name,email:rows[0].email,role:rows[0].role} });
+        } else {
+            res.status(401).send({ message: "Invalid email or password" });
+        }
+    });
+}
+
+module.exports={createUser,getUsers,loginLocalUsers};
