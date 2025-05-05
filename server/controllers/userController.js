@@ -4,6 +4,8 @@ const sqlite3 = require('sqlite3').verbose();
 const dbPath = path.join(__dirname, '../db/localDB.db');
 const db = new sqlite3.Database(dbPath);
 
+const moment = require('moment-timezone');
+
 function getUsers(req, res) {
     db.all("SELECT * FROM users", (err, rows) => {
         if (err) {
@@ -45,7 +47,7 @@ function loginLocalUsers(req, res) {
             res.status(500).send({ message: "Error while logging in" });
         } else if (rows.length > 0) {
             db.all("SELECT * FROM data", (err1, rows1) => {
-                res.status(200).send({ message: "Login successful", user:{name:rows[0].name,email:rows[0].email,role:rows[0].role ,expire_date:rows1[0].expire_date} });
+                res.status(200).send({ message: "Login successful", user:{name:rows[0].name,email:rows[0].email,role:rows[0].role ,expire_date:rows1[0].expire_date,last_sync: moment.tz("Asia/Colombo").format("YYYY-MM-DD HH:mm:ss")} });
             });
             
         } else {

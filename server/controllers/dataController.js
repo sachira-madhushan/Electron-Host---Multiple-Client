@@ -10,23 +10,26 @@ function getData(req, res) {
             res.status(500).send({ message: "Error while fetching data" });
         } else {
             res.json({
-                users: rows
+                data: rows[0]
             })
         }
     });
 }
 
 function setData(req, res) {
-    const { expire_date } = req.body;
+    const { expire_date,type } = req.body;
 
     db.all("SELECT * FROM data", (err, rows) => {
         if (rows.length > 0) {
-            const stmt = db.prepare("UPDATE data SET expire_date=?");
+            const stmt = db.prepare("UPDATE data SET expire_date=?,type=?");
             stmt.run(expire_date);
+            stmt.run(type);
+
             stmt.finalize();
         } else {
-            const stmt = db.prepare("INSERT INTO data (id,expire_date) VALUES (1,?)");
+            const stmt = db.prepare("INSERT INTO data (id,expire_date,type) VALUES (1,?,?)");
             stmt.run(expire_date);
+            stmt.run(type);
             stmt.finalize();
         }
     });
