@@ -166,6 +166,7 @@ function startRestAPI(hostIP) {
   const userRoutes=require('./server/routes/userRoutes')
   const dataRoutes=require('./server/routes/dataRoutes')
   const postRoutes=require('./server/routes/postRoutes')
+  const backupRoutes=require('./server/routes/backupRoutes')
 
   const corsOptions = {
     allowedOrigins : [
@@ -190,6 +191,8 @@ function startRestAPI(hostIP) {
   app.use('/api/data',dataRoutes);
 
   app.use('/api/posts',postRoutes);
+
+  app.use('/api/backup',backupRoutes);
 
   app.listen(port, hostIP, () => {
     console.log(`[REST API] Server started at http://${hostIP}:${port}`);
