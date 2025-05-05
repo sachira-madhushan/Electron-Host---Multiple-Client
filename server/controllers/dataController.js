@@ -21,15 +21,13 @@ function setData(req, res) {
 
     db.all("SELECT * FROM data", (err, rows) => {
         if (rows.length > 0) {
-            const stmt = db.prepare("UPDATE data SET expire_date=?,type=?");
-            stmt.run(expire_date);
-            stmt.run(type);
+            const stmt = db.prepare("UPDATE data SET expire_date=?,type=? where id=1");
+            stmt.run(expire_date,type);
 
             stmt.finalize();
         } else {
             const stmt = db.prepare("INSERT INTO data (id,expire_date,type) VALUES (1,?,?)");
-            stmt.run(expire_date);
-            stmt.run(type);
+            stmt.run(expire_date,type);
             stmt.finalize();
         }
     });
