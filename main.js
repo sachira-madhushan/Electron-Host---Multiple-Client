@@ -7,6 +7,7 @@ const http = require('http');
 const fs = require('fs');
 const cors=require('cors');
 const bodyParser = require('body-parser');
+const postSyncCron=require('./postSyncCron')
 
 function startReactServer() {
   const port = 3011;
@@ -36,6 +37,7 @@ function startReactServer() {
 
   
   server.listen(port, () => {
+    postSyncCron();
     console.log(`Server running at http://localhost:${port}`);
 
    
@@ -51,6 +53,7 @@ function startReactServer() {
     
     win.loadURL(`http://localhost:${port}`);
     startUDPListener(win);
+
   });
 }
 
@@ -131,6 +134,7 @@ function startUDPListener(window) {
   udpClient.bind(4000, () => {
     console.log('[UDP CLIENT] Listening for host on port 4000...');
   });
+
 }
 
 function startUDPBroadcast() {

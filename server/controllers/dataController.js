@@ -17,17 +17,17 @@ function getData(req, res) {
 }
 
 function setData(req, res) {
-    const { expire_date,type } = req.body;
+    const { expire_date,type,email} = req.body;
 
     db.all("SELECT * FROM data", (err, rows) => {
         if (rows.length > 0) {
-            const stmt = db.prepare("UPDATE data SET expire_date=?,type=? where id=1");
-            stmt.run(expire_date,type);
+            const stmt = db.prepare("UPDATE data SET expire_date=?,type=?,email=? where id=1");
+            stmt.run(expire_date,type,email);
 
             stmt.finalize();
         } else {
-            const stmt = db.prepare("INSERT INTO data (id,expire_date,type) VALUES (1,?,?)");
-            stmt.run(expire_date,type);
+            const stmt = db.prepare("INSERT INTO data (id,expire_date,type,email) VALUES (1,?,?,?)");
+            stmt.run(expire_date,type,email);
             stmt.finalize();
         }
     });
