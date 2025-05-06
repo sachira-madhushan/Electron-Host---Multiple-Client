@@ -36,27 +36,25 @@ function startReactServer() {
   });
 
   function copyDBToUserDocuments() {
-    const dbFileName = path.join(__dirname, '/server/db/localDB.db');
+    const dbFileName = '/server/db/localDB.db';
 
-    // Get the documents directory using os.homedir() and path.join
     const targetDir = path.join(os.homedir(), 'Documents', 'CrudPWAAPP');
+
     const targetPath = path.join(targetDir, path.basename(dbFileName));
 
-    const sourcePath = app.isPackaged
-        ? path.join(process.resourcesPath, 'assets', path.basename(dbFileName))
-        : path.join(__dirname, dbFileName);
+    const sourcePath = path.join(__dirname, dbFileName);
 
     if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
+      fs.mkdirSync(targetDir, { recursive: true });
     }
 
     if (!fs.existsSync(targetPath)) {
-        fs.copyFileSync(sourcePath, targetPath);
-        console.log(`[DB COPY] Copied to: ${targetPath}`);
+      fs.copyFileSync(sourcePath, targetPath);
+      console.log(`[DB COPY] Copied to: ${targetPath}`);
     } else {
-        console.log(`[DB COPY] File already exists at: ${targetPath}`);
+      console.log(`[DB COPY] File already exists at: ${targetPath}`);
     }
-}
+  }
 
   server.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
