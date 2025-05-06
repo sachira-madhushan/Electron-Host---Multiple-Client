@@ -1,7 +1,12 @@
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const dbPath = path.join(__dirname, '../db/localDB.db');
+const os = require('os');
+
+const homeDir = os.homedir();
+const documentsDir = path.join(homeDir, 'Documents', 'CrudPWAAPP');
+const dbPath = path.join(documentsDir, 'localDB.db');
+
 const db = new sqlite3.Database(dbPath);
 
 function getData(req, res) {

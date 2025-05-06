@@ -5,12 +5,17 @@ const os = require('os');
 const multer = require('multer');
 const moment = require('moment-timezone');
 
-const dbPath = path.join(__dirname, '../db/localDB.db');
+const homeDir = os.homedir();
+const documentsDir = path.join(homeDir, 'Documents', 'CrudPWAAPP');
+const dbPath = path.join(documentsDir, 'localDB.db');
+
 const db = new sqlite3.Database(dbPath);
 
 let downloadsFolder = path.join(os.homedir(), 'Downloads');
 
-const upload = multer({ dest: 'uploads/' });
+const uploadDir = path.join(os.homedir(), 'Documents', 'CrudPWAAPP');
+
+const upload = multer({ dest: uploadDir});
 
 function backup(req, res) {
     const timestamp = moment().tz('Asia/Colombo').format('YYYY-MM-DD HH_mm_ss');

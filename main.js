@@ -5,14 +5,14 @@ const os = require('os');
 const express = require('express');
 const http = require('http');
 const fs = require('fs');
-const cors=require('cors');
+const cors = require('cors');
 const bodyParser = require('body-parser');
-const postSyncCron=require('./postSyncCron')
+const postSyncCron = require('./postSyncCron')
 
 function startReactServer() {
   const port = 3011;
   const buildPath = path.join(__dirname, 'dist');
-
+  copyDBToUserDocuments();
   const server = http.createServer((req, res) => {
     let filePath = path.join(buildPath, req.url === '/' ? 'index.html' : req.url);
 
@@ -35,12 +35,33 @@ function startReactServer() {
     });
   });
 
-  
+  function copyDBToUserDocuments() {
+    const dbFileName = path.join(__dirname, '/server/db/localDB.db');
+
+    // Get the documents directory using os.homedir() and path.join
+    const targetDir = path.join(os.homedir(), 'Documents', 'CrudPWAAPP');
+    const targetPath = path.join(targetDir, path.basename(dbFileName));
+
+    const sourcePath = app.isPackaged
+        ? path.join(process.resourcesPath, 'assets', path.basename(dbFileName))
+        : path.join(__dirname, dbFileName);
+
+    if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(targetPath)) {
+        fs.copyFileSync(sourcePath, targetPath);
+        console.log(`[DB COPY] Copied to: ${targetPath}`);
+    } else {
+        console.log(`[DB COPY] File already exists at: ${targetPath}`);
+    }
+}
+
   server.listen(port, () => {
-    postSyncCron();
     console.log(`Server running at http://localhost:${port}`);
 
-   
+
     const win = new BrowserWindow({
       width: 1000,
       height: 700,
@@ -50,7 +71,7 @@ function startReactServer() {
       },
     });
 
-    
+
     win.loadURL(`http://localhost:${port}`);
     startUDPListener(win);
 
@@ -163,22 +184,22 @@ function startUDPBroadcast() {
 function startRestAPI(hostIP) {
   const app = express();
   const port = 3000;
-  const userRoutes=require('./server/routes/userRoutes')
-  const dataRoutes=require('./server/routes/dataRoutes')
-  const postRoutes=require('./server/routes/postRoutes')
-  const backupRoutes=require('./server/routes/backupRoutes')
+  const userRoutes = require('./server/routes/userRoutes')
+  const dataRoutes = require('./server/routes/dataRoutes')
+  const postRoutes = require('./server/routes/postRoutes')
+  const backupRoutes = require('./server/routes/backupRoutes')
 
   const corsOptions = {
-    allowedOrigins : [
+    allowedOrigins: [
       'http://localhost:3011',
     ],
     allowedHeaders: ['*'],
     credentials: true,
   };
-  
+
   app.use(cors(corsOptions));
   app.options('/{*any}', cors(corsOptions));
-  
+
   app.use(bodyParser.json({ limit: "50mb" }));
   app.use(bodyParser.json());
 
@@ -186,16 +207,18 @@ function startRestAPI(hostIP) {
     res.send('Hello from the host API server!');
   });
 
-  app.use('/api/users',userRoutes);
+  app.use('/api/users', userRoutes);
 
-  app.use('/api/data',dataRoutes);
+  app.use('/api/data', dataRoutes);
 
-  app.use('/api/posts',postRoutes);
+  app.use('/api/posts', postRoutes);
 
-  app.use('/api/backup',backupRoutes);
+  app.use('/api/backup', backupRoutes);
 
   app.listen(port, hostIP, () => {
     console.log(`[REST API] Server started at http://${hostIP}:${port}`);
+
+    postSyncCron();
   });
 }
 
