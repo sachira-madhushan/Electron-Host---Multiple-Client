@@ -2,9 +2,12 @@ const sqlite3 = require('sqlite3').verbose();
 const axios = require('axios');
 const cron = require('node-cron');
 const path = require('path');
+const os=require('os');
 const CLOUD_URL = 'https://react-pwa-crud-backend-auth.onrender.com/api/v1/posts/sync';
 
-const dbPath = path.join(__dirname, 'server/db/localDB.db');
+const homeDir = os.homedir();
+const documentsDir = path.join(homeDir, 'Documents', 'CrudPWAAPP');
+const dbPath = path.join(documentsDir, 'localDB.db');
 const db = new sqlite3.Database(dbPath);
 
 function syncPosts() {
@@ -44,7 +47,6 @@ function syncPosts() {
                     const toSync = posts.filter(p => p.sync_status !== 'deleted');
                     const toDelete = posts.filter(p => p.sync_status === 'deleted');
 
-                    // Update synced posts
                     if (toSync.length > 0) {
                         const idsToSync = toSync.map(p => p.id);
                         const placeholders = idsToSync.map(() => '?').join(',');
@@ -57,8 +59,6 @@ function syncPosts() {
                             }
                         });
                     }
-
-                    // Delete posts marked for deletion
                     if (toDelete.length > 0) {
                         const idsToDelete = toDelete.map(p => p.id);
                         const placeholders = idsToDelete.map(() => '?').join(',');

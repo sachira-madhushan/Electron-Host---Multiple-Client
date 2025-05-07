@@ -40,16 +40,12 @@ function createUser(req, res) {
                 users: rows,
                 message: "User created successfully"
             });
-
         }
     });
-
 }
 
 function loginLocalUsers(req, res) {
     const { email, password } = req.body;
-
-
     db.all("SELECT * FROM users WHERE email=? AND password=? LIMIT 1", [email, password], (err, rows) => {
         if (err) {
             res.status(500).send({ message: "Error while logging in" });

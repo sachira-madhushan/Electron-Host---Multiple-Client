@@ -157,6 +157,7 @@ function startUDPListener(window) {
 
 }
 
+
 function startUDPBroadcast() {
 
   const udpHost = dgram.createSocket('udp4');
@@ -222,5 +223,7 @@ function startRestAPI(hostIP) {
 }
 
 app.whenReady().then(() => {
+  const userDataPath = app.getPath('userData');
+  console.log(userDataPath)
   startReactServer();
 });
